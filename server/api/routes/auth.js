@@ -11,7 +11,16 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   ssl: {
-    rejectUnauthorized: true
+    rejectUnauthorized: false // Temporarily disable strict SSL verification for testing
+  },
+  authSwitchHandler: ({ pluginName, pluginData }, cb) => {
+    if (pluginName === 'caching_sha2_password') {
+      const password = process.env.DB_PASSWORD;
+      const buffer = Buffer.from(password + '\0');
+      cb(null, buffer);
+    } else {
+      cb(new Error(`Unsupported auth plugin: ${pluginName}`));
+    }
   }
 });
 
